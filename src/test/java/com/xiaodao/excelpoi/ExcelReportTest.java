@@ -31,7 +31,7 @@ public class ExcelReportTest extends ExcelPoiApplicationTests{
 
     @Test
     public void tetsReplaceParame() throws IOException {
-        ExcelReport excelReport = new ExcelReport("G:/code/excel-poi/src/main/resources/template.xlsx");
+        ExcelReport excelReport = new ExcelReport("C:/Users/xiaodao//Desktop/xiaodao/code/git/excel-poi/src/main/resources/template.xlsx");
         List<EObject> myEobjects = new ArrayList<>();
         for(int i =0;i<100;i++){
             MyEobject myEobject = new MyEobject();
@@ -41,7 +41,8 @@ public class ExcelReportTest extends ExcelPoiApplicationTests{
             myEobject.setAge("27"+i);
             myEobjects.add(myEobject);
         }
-       // excelReport.insertIntoTable(0,11,myEobjects);
-        excelReport.generate1("G:/code/excel-poi/src/main/resources/templateOut.xlsx");
+       excelReport.insertIntoTable(0,11,myEobjects,true);
+        excelReport.insertPicture();
+        excelReport.generate("C:/Users/xiaodao//Desktop/xiaodao/code/git/excel-poi/src/main/resources/templateOut.xlsx");
     }
 }
