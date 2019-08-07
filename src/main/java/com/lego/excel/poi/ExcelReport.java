@@ -1,12 +1,12 @@
-package com.xiaodao.excelpoi;
+package com.lego.excel.poi;
 
-import com.xiaodao.excelpoi.element.EObject;
-import com.xiaodao.excelpoi.model.Coordinate;
-import com.xiaodao.excelpoi.util.ExcelUtil;
+import com.lego.excel.poi.element.EObject;
+import com.lego.excel.poi.element.EPic;
+import com.lego.excel.poi.model.Coordinate;
+import com.lego.excel.poi.util.ExcelUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.ClientAnchor;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.*;
 
 import java.io.*;
@@ -25,9 +25,8 @@ public class ExcelReport {
      * 构造方法
      *
      * @param templatePath
-     * @throws IOException
      */
-    public ExcelReport(String templatePath) throws IOException {
+    public ExcelReport(String templatePath) {
         this.templatePath = templatePath;
         init();
     }
@@ -37,7 +36,7 @@ public class ExcelReport {
      *
      * @throws IOException
      */
-    public void init() {
+    private void init() {
         try {
             is = ExcelUtil.getFileStream(this.templatePath);
             xsf = new XSSFWorkbook(is);
@@ -62,11 +61,16 @@ public class ExcelReport {
                 int totalLineNumber = row.getPhysicalNumberOfCells();
                 for (int lineNumber = 0; lineNumber < totalLineNumber; lineNumber++) {
                     XSSFCell cell = row.getCell(lineNumber);
-                    String cellValue = cell.getStringCellValue();
-                    Matcher matcher = ExcelUtil.matcher(cellValue);
-                    while (matcher.find()) {
-                        coordinates.add(new Coordinate(sheetNumber, rowNumber, lineNumber, matcher.group(1)));
+                    try {
+                        String cellValue = cell.getStringCellValue();
+                        Matcher matcher = ExcelUtil.matcher(cellValue);
+                        while (matcher.find()) {
+                            coordinates.add(new Coordinate(sheetNumber, rowNumber, lineNumber, matcher.group(1)));
+                        }
+                    } catch (Exception e) {
+                        log.error("get cell value faile:{}", e.getMessage());
                     }
+
 
                 }
 
@@ -81,12 +85,22 @@ public class ExcelReport {
      * 对Excel中的值进行替换
      */
 
-    public void replaceParame(List<Coordinate> coordinates, EObject eObject) {
+    public void replaceParame(EObject eObject) {
+        List<Coordinate> coordinates = getReplaceParam();
         for (Coordinate coordinate : coordinates) {
             String cellValue = eObject.getTextByKey(coordinate.getValue().toString());
             xsf.getSheetAt(coordinate.getSheetNumber()).getRow(coordinate.getRowNumber()).getCell(coordinate.getLineNumber()).setCellValue(cellValue);
         }
     }
+
+    /**
+     * 动态插入
+     *
+     * @param sheetNumber 第几个sheet
+     * @param rowNumber   第几行
+     * @param eObjects    插入的对象 list
+     * @param hasBorder   是否带有border
+     */
 
     public void insertIntoTable(int sheetNumber, int rowNumber, List<EObject> eObjects, boolean hasBorder) {
         List<Coordinate> coordinates = new ArrayList<>();
@@ -116,16 +130,28 @@ public class ExcelReport {
             while (matcher.find()) {
                 coordinates.add(new Coordinate(sheetNumber, rowNumber, lineNumber, matcher.group(1)));
             }
+            xsf.getSheetAt(sheetNumber).getRow(rowNumber).createCell(lineNumber);
+            if (hasBorder) {
+                xsf.getSheetAt(sheetNumber).getRow(rowNumber).getCell(lineNumber).setCellStyle(style);
+            }
         }
 
         for (int i = 0; i < eObjects.size(); i++) {
+
             for (Coordinate coordinate : coordinates) {
-                xsf.getSheetAt(coordinate.getSheetNumber()).getRow(coordinate.getRowNumber() + i).getCell(coordinate.getLineNumber()).setCellValue(eObjects.get(i).getTextByKey(coordinate.getValue().toString()));
+                setCellValue(coordinate.getSheetNumber(), coordinate.getRowNumber() + i, coordinate.getLineNumber(), eObjects.get(i).getValByKey(coordinate.getValue().toString()));
             }
         }
 
     }
 
+    /**
+     * 输出路径
+     *
+     * @param outDocPath
+     * @return
+     * @throws IOException
+     */
     public boolean generate(String outDocPath) throws IOException {
         os = new FileOutputStream(outDocPath);
         xsf.write(os);
@@ -135,39 +161,55 @@ public class ExcelReport {
     }
 
 
-    public boolean generate1(String outDocPath) throws IOException {
-        xsf.getSheetAt(0).shiftRows(12, 20, 9);
-        xsf.getSheetAt(0).createRow(12);
-        xsf.getSheetAt(0).createRow(13);
-        xsf.getSheetAt(0).createRow(14);
-        xsf.getSheetAt(0).createRow(15);
-        xsf.getSheetAt(0).createRow(16);
-        xsf.getSheetAt(0).createRow(17);
-        xsf.getSheetAt(0).createRow(18);
-        xsf.getSheetAt(0).createRow(19);
-        os = new FileOutputStream(outDocPath);
-        xsf.write(os);
-        ExcelUtil.close(os);
-        ExcelUtil.close(is);
-        return true;
-    }
+    /**
+     * @param sheetNumber 第几个sheet
+     * @param rowNumber   第几行
+     * @param lineNumber  第几列
+     * @param value       插入值
+     */
 
-
-    public void setCellValue(int sheetNumber, int rowNumber, int lineNumber, Object value) {
+    private void setCellValue(int sheetNumber, int rowNumber, int lineNumber, Object value) {
         if (value instanceof Integer || value instanceof Double) {
             xsf.getSheetAt(sheetNumber).getRow(rowNumber).getCell(lineNumber).setCellValue(Double.valueOf(value.toString()));
+        } else if (value instanceof EPic) {
+            try {
+                xsf.getSheetAt(sheetNumber).getRow(rowNumber).getCell(lineNumber).setCellValue("");
+                insertPicture(sheetNumber, rowNumber, lineNumber, value);
+            } catch (Exception e) {
+                log.error("插入图片失败：{}", e.getMessage());
+            }
         } else {
             xsf.getSheetAt(sheetNumber).getRow(rowNumber).getCell(lineNumber).setCellValue(value.toString());
         }
 
     }
 
-    public void insertPicture() throws IOException {
-        XSSFDrawing xssfDrawing = xsf.getSheetAt(0).createDrawingPatriarch();
-        xsf.addPicture(new FileInputStream("C:/Users/xiaodao/Desktop/1.png"), Workbook.PICTURE_TYPE_PNG);
-        ClientAnchor anchor = new XSSFClientAnchor(1, 1, 1, 1,
-                8, 11, 9, 12);
-        xssfDrawing.createPicture(anchor,0);
+    /**
+     * @param sheetNumber 第几个sheet
+     * @param rowNumber   第几行
+     * @param lineNumber  第几列
+     * @param value       插入值
+     */
+
+    private void insertPicture(int sheetNumber, int rowNumber, int lineNumber, Object value) {
+        EPic ePic;
+        if (value instanceof EPic) {
+            ePic = (EPic) value;
+        } else {
+            return;
+        }
+
+        XSSFDrawing xssfDrawing = xsf.getSheetAt(sheetNumber).createDrawingPatriarch();
+        try {
+            xsf.addPicture(ExcelUtil.getFileStream(ePic.getUrl()), ExcelUtil.getPictureType(ePic.getType()));
+
+            ClientAnchor anchor = new XSSFClientAnchor(1, 1, 1, 1,
+                    lineNumber, rowNumber, lineNumber + 1, rowNumber + 1);
+            xssfDrawing.createPicture(anchor, xsf.getAllPictures().size() - 1);
+        } catch (Exception e) {
+            log.error("获取图片上失败：{}", e.getMessage());
+        }
     }
+
 
 }

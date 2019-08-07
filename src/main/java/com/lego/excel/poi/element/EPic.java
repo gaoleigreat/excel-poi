@@ -1,4 +1,4 @@
-package com.xiaodao.excelpoi.element;
+package com.lego.excel.poi.element;
 
 public class EPic {
     public Integer getWidth() {

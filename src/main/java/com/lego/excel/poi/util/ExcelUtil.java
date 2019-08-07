@@ -1,6 +1,7 @@
-package com.xiaodao.excelpoi.util;
+package com.lego.excel.poi.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Workbook;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -89,6 +90,28 @@ public class ExcelUtil {
     }
 
 
-
+    /**
+     * 根据图片类型，取得对应的图片类型代码
+     *
+     * @param picType
+     * @return int
+     */
+    public static int getPictureType(String picType) {
+        int res = Workbook.PICTURE_TYPE_PICT;
+        if (picType != null) {
+            if (picType.equalsIgnoreCase("png")) {
+                res = Workbook.PICTURE_TYPE_PNG;
+            } else if (picType.equalsIgnoreCase("dib")) {
+                res = Workbook.PICTURE_TYPE_DIB;
+            } else if (picType.equalsIgnoreCase("emf")) {
+                res = Workbook.PICTURE_TYPE_EMF;
+            } else if (picType.equalsIgnoreCase("jpg") || picType.equalsIgnoreCase("jpeg")) {
+                res = Workbook.PICTURE_TYPE_JPEG;
+            } else if (picType.equalsIgnoreCase("wmf")) {
+                res = Workbook.PICTURE_TYPE_WMF;
+            }
+        }
+        return res;
+    }
 
 }

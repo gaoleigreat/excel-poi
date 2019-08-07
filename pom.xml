@@ -8,8 +8,8 @@
         <version>2.1.6.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.xiaodao</groupId>
-    <artifactId>excel-poi</artifactId>
+    <groupId>com.lego.excel</groupId>
+    <artifactId>poi</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>excel-poi</name>
     <description>Demo project for Spring Boot</description>

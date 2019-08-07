@@ -1,4 +1,4 @@
-package com.xiaodao.excelpoi.model;
+package com.lego.excel.poi.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
