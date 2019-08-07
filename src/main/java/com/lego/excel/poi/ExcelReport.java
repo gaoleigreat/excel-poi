@@ -88,8 +88,19 @@ public class ExcelReport {
     public void replaceParame(EObject eObject) {
         List<Coordinate> coordinates = getReplaceParam();
         for (Coordinate coordinate : coordinates) {
-            String cellValue = eObject.getTextByKey(coordinate.getValue().toString());
-            xsf.getSheetAt(coordinate.getSheetNumber()).getRow(coordinate.getRowNumber()).getCell(coordinate.getLineNumber()).setCellValue(cellValue);
+            Object value = eObject.getValByKey(coordinate.getValue().toString());
+            if (value instanceof Integer || value instanceof Double) {
+                xsf.getSheetAt(coordinate.getSheetNumber()).getRow(coordinate.getRowNumber()).getCell(coordinate.getLineNumber()).setCellValue(Double.valueOf(value.toString()));
+            } else if (value instanceof EPic) {
+                try {
+                    xsf.getSheetAt(coordinate.getSheetNumber()).getRow(coordinate.getRowNumber()).getCell(coordinate.getLineNumber()).setCellValue("");
+                    insertPicture(coordinate.getSheetNumber(), coordinate.getRowNumber(), coordinate.getLineNumber(), value);
+                } catch (Exception e) {
+                    log.error("插入图片失败：{}", e.getMessage());
+                }
+            } else {
+                xsf.getSheetAt(coordinate.getSheetNumber()).getRow(coordinate.getRowNumber()).getCell(coordinate.getLineNumber()).setCellValue(value.toString());
+            }
         }
     }
 
@@ -203,8 +214,8 @@ public class ExcelReport {
         try {
             xsf.addPicture(ExcelUtil.getFileStream(ePic.getUrl()), ExcelUtil.getPictureType(ePic.getType()));
 
-            ClientAnchor anchor = new XSSFClientAnchor(1, 1, 1, 1,
-                    lineNumber, rowNumber, lineNumber + 1, rowNumber + 1);
+            ClientAnchor anchor = new XSSFClientAnchor(10000, 10000, 0, 0,
+                    lineNumber, rowNumber, lineNumber + ePic.getWidth(), rowNumber + ePic.getHeight());
             xssfDrawing.createPicture(anchor, xsf.getAllPictures().size() - 1);
         } catch (Exception e) {
             log.error("获取图片上失败：{}", e.getMessage());

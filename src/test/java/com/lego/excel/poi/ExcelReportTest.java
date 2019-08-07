@@ -43,6 +43,8 @@ public class ExcelReportTest extends ExcelPoiApplicationTests {
             EPic ePic = new EPic();
             ePic.setType("png");
             ePic.setUrl("http://114.115.233.31/group1/M00/00/00/wKgAX102zVeAAzg0AAAu-rWbsVk821_big.png");
+            ePic.setHeight(1);
+            ePic.setWidth(1);
 
             myEobject.setPicture(ePic);
             myEobjects.add(myEobject);
@@ -55,6 +57,8 @@ public class ExcelReportTest extends ExcelPoiApplicationTests {
         myEobject.setAge(27);
         EPic ePic = new EPic();
         ePic.setType("png");
+        ePic.setHeight(4);
+        ePic.setWidth(5);
 
         ePic.setUrl("http://114.115.233.31/group1/M00/00/00/wKgAX102zVeAAzg0AAAu-rWbsVk821_big.png");
         myEobject.setPicture(ePic);
